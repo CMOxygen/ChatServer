@@ -64,7 +64,7 @@ public class SimpleChatClientA {
 
     private void setUpNetworking() {
         try {
-            socket = new Socket("127.0.0.1", 5000);
+            socket = new Socket("194.87.99.197", 5000);
             InputStreamReader streamReader
                     = new InputStreamReader(socket.getInputStream());
             reader = new BufferedReader(streamReader);
