@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -8,7 +9,9 @@ import java.util.Iterator;
 
 public class VerySimpleChatServer {
 
-    ArrayList clientOutputStream;
+//    ArrayList clientOutputStream;
+
+    ArrayList<User> clientOutputStream;
 
     public static void main(String[] args) {
         new VerySimpleChatServer().go();
@@ -16,7 +19,7 @@ public class VerySimpleChatServer {
 
     public void go() {
 
-        clientOutputStream = new ArrayList();
+        clientOutputStream = new ArrayList<User>();
 
         try {
             ServerSocket serverSocket = new ServerSocket(5000);
@@ -24,9 +27,16 @@ public class VerySimpleChatServer {
             while (true) {
                 Socket clientSocket = serverSocket.accept();
 
+                User newUser = new User();
+
                 PrintWriter writer
                         = new PrintWriter(clientSocket.getOutputStream());
-                clientOutputStream.add(writer);
+
+                newUser.setUserName("USER");
+                newUser.setUserSocket(clientSocket);
+                newUser.setUserWriter(writer);
+
+                clientOutputStream.add(newUser);
 
                 Thread thread = new Thread(new ClientHandler(clientSocket));
                 thread.start();
@@ -41,10 +51,9 @@ public class VerySimpleChatServer {
 
         Iterator iterator = clientOutputStream.iterator();
 
-        while (iterator.hasNext()) {
-
+        for (User user : clientOutputStream) {
             try {
-                PrintWriter writer = (PrintWriter) iterator.next();
+                PrintWriter writer = user.getUserWriter();
                 writer.println(message);
                 writer.flush();
                 System.out.println("WRITE" + message);
@@ -53,6 +62,19 @@ public class VerySimpleChatServer {
                 ex.printStackTrace();
             }
         }
+
+//        while (iterator.hasNext()) {
+//
+//            try {
+//                PrintWriter writer = (/*PrintWriter*/) iterator.next();
+//                writer.println(message);
+//                writer.flush();
+//                System.out.println("WRITE" + message);
+//
+//            } catch (Exception ex) {
+//                ex.printStackTrace();
+//            }
+//        }
     }
 
     class ClientHandler implements Runnable {
@@ -84,5 +106,31 @@ public class VerySimpleChatServer {
                 ex.printStackTrace();
             }
         }
+    }
+}
+
+class User implements Serializable {
+    String userName = "NULL";
+    Socket userSocket;
+    PrintWriter userWriter;
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public void setUserSocket(Socket userSocket) {
+        this.userSocket = userSocket;
+    }
+
+    public PrintWriter getUserWriter() {
+        return userWriter;
+    }
+
+    public void setUserWriter(PrintWriter userWriter) {
+        this.userWriter = userWriter;
     }
 }

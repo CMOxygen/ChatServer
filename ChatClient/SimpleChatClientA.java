@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.sql.Time;
 
 public class SimpleChatClientA {
 
@@ -22,6 +23,7 @@ public class SimpleChatClientA {
 
     JTextArea incoming;
     JTextField outgoing;
+    JTextField userName;
 
     public static void main(String[] args) {
         new SimpleChatClientA().go();
@@ -36,6 +38,8 @@ public class SimpleChatClientA {
         incoming.setWrapStyleWord(true);
         incoming.setEditable(false);
 
+        userName = new JTextField(10);
+
         JScrollPane qScroller = new JScrollPane(incoming);
 
         qScroller.setVerticalScrollBarPolicy(
@@ -45,9 +49,13 @@ public class SimpleChatClientA {
 
         outgoing = new JTextField(20);
 
+        JLabel labelUserName = new JLabel("User Name:");
+
         JButton buttonSend = new JButton("SEND");
         buttonSend.addActionListener(new ListenerButtonSend());
         panelMain.add(qScroller);
+        panelMain.add(labelUserName);
+        panelMain.add(userName);
         panelMain.add(outgoing);
         panelMain.add(buttonSend);
 
@@ -58,7 +66,7 @@ public class SimpleChatClientA {
 
         frame.getContentPane().add(BorderLayout.CENTER, panelMain);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setSize(400, 500);
+        frame.setSize(500, 500);
         frame.setVisible(true);
     }
 
@@ -80,8 +88,10 @@ public class SimpleChatClientA {
     public class ListenerButtonSend implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent ev) {
+
             try {
-                writer.println(outgoing.getText());
+                writer.println("[" + userName.getText()
+                        + "]" + outgoing.getText());
                 writer.flush();
                 System.out.println("WRITE " + outgoing.getText());
             } catch (Exception exception) {
@@ -98,7 +108,6 @@ public class SimpleChatClientA {
             String message;
 
             try {
-
                 while ((message = reader.readLine()) != null) {
                     System.out.println("read " + message);
                     incoming.append(message + "\n");
