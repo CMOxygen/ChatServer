@@ -10,16 +10,16 @@ import java.io.Serializable;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class VerySimpleChatServer {
-
-//    ArrayList clientOutputStream;
 
     ArrayList<User> clientOutputStream;
 
     String chatHistory = "";
 
+    InputStreamReader isReader;
+    BufferedReader reader;
+    Socket socket;
 
     public static void main(String[] args) {
         new VerySimpleChatServer().go();
@@ -34,6 +34,7 @@ public class VerySimpleChatServer {
             ServerSocket serverSocket = new ServerSocket(5000);
 
             while (true) {
+
                 Socket clientSocket = serverSocket.accept();
 
                 User newUser = new User();
@@ -41,14 +42,20 @@ public class VerySimpleChatServer {
                 PrintWriter writer
                         = new PrintWriter(clientSocket.getOutputStream());
 
+                isReader = new InputStreamReader(clientSocket.getInputStream());
+                reader = new BufferedReader(isReader);
+
                 newUser.setUserName("USER");
                 newUser.setUserSocket(clientSocket);
                 newUser.setUserWriter(writer);
-
+                newUser.setUserInputStreamReader(isReader);
+                newUser.setUserReader(reader);
                 clientOutputStream.add(newUser);
 
-                Thread thread = new Thread(new ClientHandler(clientSocket));
+                Thread thread = new Thread(new ClientHandler(newUser));
                 thread.start();
+
+                writer.write(chatHistory);
                 System.out.println("got a connection");
             }
         } catch (Exception ex) {
@@ -58,45 +65,30 @@ public class VerySimpleChatServer {
 
     public void tellEveryone(String message) {
 
-//        Iterator iterator = clientOutputStream.iterator();
-       chatHistory = chatHistory.concat(message);
-
         for (User user : clientOutputStream) {
             try {
                 PrintWriter writer = user.getUserWriter();
                 writer.println(message);
                 writer.flush();
-                System.out.println("WRITE" + chatHistory);
+                System.out.println("WRITE" + message);
 
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
-
-//        while (iterator.hasNext()) {
-//
-//            try {
-//                PrintWriter writer = (/*PrintWriter*/) iterator.next();
-//                writer.println(message);
-//                writer.flush();
-//                System.out.println("WRITE" + message);
-//
-//            } catch (Exception ex) {
-//                ex.printStackTrace();
-//            }
-//        }
     }
 
     class ClientHandler implements Runnable {
-        BufferedReader reader;
-        Socket socket;
 
-        public ClientHandler(Socket clientSocket) {
+        User userToTalk;
+
+        public ClientHandler(User user) {
+
             try {
-                socket = clientSocket;
-                InputStreamReader isReader
-                        = new InputStreamReader(socket.getInputStream());
-                reader = new BufferedReader(isReader);
+                socket = user.getUserSocket();
+                reader = user.getUserReader();
+                //                isReader = user.get;
+                userToTalk = user;
 
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -110,8 +102,17 @@ public class VerySimpleChatServer {
             try {
                 while ((message = reader.readLine()) != null) {
                     System.out.println("read " + message);
-//                    chatHistory.concat(message + "\n");
+                    chatHistory = chatHistory.concat(message + "\n");
+                    System.out.println("HISTORY:\n" + chatHistory);
+
                     tellEveryone(message);
+
+//                    if (message.contains("/requestChatHistory")) {
+//                        userToTalk.getUserWriter().write(chatHistory);
+//                        continue;
+//                    } else {
+//                        tellEveryone(message);
+//                    }
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -124,6 +125,8 @@ class User implements Serializable {
     String userName = "NULL";
     Socket userSocket;
     PrintWriter userWriter;
+    InputStreamReader userInputStreamReader;
+    BufferedReader userReader;
 
     public String getUserName() {
         return userName;
@@ -131,6 +134,10 @@ class User implements Serializable {
 
     public void setUserName(String userName) {
         this.userName = userName;
+    }
+
+    public Socket getUserSocket() {
+        return userSocket;
     }
 
     public void setUserSocket(Socket userSocket) {
@@ -143,5 +150,17 @@ class User implements Serializable {
 
     public void setUserWriter(PrintWriter userWriter) {
         this.userWriter = userWriter;
+    }
+
+    public void setUserInputStreamReader(InputStreamReader userInputStreamReader) {
+        this.userInputStreamReader = userInputStreamReader;
+    }
+
+    public BufferedReader getUserReader() {
+        return userReader;
+    }
+
+    public void setUserReader(BufferedReader userReader) {
+        this.userReader = userReader;
     }
 }

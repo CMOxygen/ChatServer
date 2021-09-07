@@ -1,6 +1,7 @@
 /*
-В данном примере реализован клиент для чата.
- */
+LOCALHOST CHAT VERSION FOR DEVELOPMENT.
+NOT FOR COMMON USE.
+*/
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,9 +12,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.sql.Time;
 
 public class SimpleChatClientA {
+
+    String chatHistory = "";
 
     //два потока для передачи данных.
     PrintWriter writer;
@@ -25,6 +27,8 @@ public class SimpleChatClientA {
     JTextField outgoing;
     JTextField userName;
 
+    JScrollPane qScroller;
+
     public static void main(String[] args) {
         new SimpleChatClientA().go();
     }
@@ -33,25 +37,27 @@ public class SimpleChatClientA {
 
         JFrame frame = new JFrame("CHAT");
         JPanel panelMain = new JPanel();
+
         incoming = new JTextArea(15, 50);
+
+        outgoing = new JTextField(20);
+        userName = new JTextField(10);
+
+        qScroller = new JScrollPane(incoming);
+
+        JLabel labelUserName = new JLabel("User Name:");
+
+        JButton buttonSend = new JButton("SEND");
+
         incoming.setLineWrap(true);
         incoming.setWrapStyleWord(true);
         incoming.setEditable(false);
-
-        userName = new JTextField(10);
-
-        JScrollPane qScroller = new JScrollPane(incoming);
 
         qScroller.setVerticalScrollBarPolicy(
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         qScroller.setHorizontalScrollBarPolicy(
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
-        outgoing = new JTextField(20);
-
-        JLabel labelUserName = new JLabel("User Name:");
-
-        JButton buttonSend = new JButton("SEND");
         buttonSend.addActionListener(new ListenerButtonSend());
         panelMain.add(qScroller);
         panelMain.add(labelUserName);
@@ -76,6 +82,7 @@ public class SimpleChatClientA {
             InputStreamReader streamReader
                     = new InputStreamReader(socket.getInputStream());
             reader = new BufferedReader(streamReader);
+
             writer = new PrintWriter(socket.getOutputStream());
 
             System.out.println("NETWORKING ESTABLISHED");
@@ -90,10 +97,13 @@ public class SimpleChatClientA {
         public void actionPerformed(ActionEvent ev) {
 
             try {
+
                 writer.println("[" + userName.getText()
                         + "]" + outgoing.getText());
+
                 writer.flush();
                 System.out.println("WRITE " + outgoing.getText());
+
             } catch (Exception exception) {
                 exception.printStackTrace();
             }
@@ -105,12 +115,18 @@ public class SimpleChatClientA {
     public class IncomingReader implements Runnable {
         @Override
         public void run() {
+
             String message;
 
+            JScrollBar vertical = qScroller.getVerticalScrollBar();
+
             try {
+
                 while ((message = reader.readLine()) != null) {
                     System.out.println("read " + message);
+                    chatHistory = chatHistory.concat(message + "\n");
                     incoming.append(message + "\n");
+                    vertical.setValue(vertical.getMaximum());
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
