@@ -1,8 +1,3 @@
-/*
-LOCALHOST CHAT VERSION FOR DEVELOPMENT.
-NOT FOR COMMON USE.
-*/
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -17,7 +12,7 @@ public class SimpleChatClientA {
 
     String chatHistory = "";
 
-    //два потока для передачи данных.
+    // два потока для передачи данных.
     PrintWriter writer;
     BufferedReader reader;
 
@@ -28,6 +23,8 @@ public class SimpleChatClientA {
     JTextField userName;
 
     JScrollPane qScroller;
+
+    JDialog test;
 
     public static void main(String[] args) {
         new SimpleChatClientA().go();
@@ -53,10 +50,8 @@ public class SimpleChatClientA {
         incoming.setWrapStyleWord(true);
         incoming.setEditable(false);
 
-        qScroller.setVerticalScrollBarPolicy(
-                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        qScroller.setHorizontalScrollBarPolicy(
-                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        qScroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        qScroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         buttonSend.addActionListener(new ListenerButtonSend());
         panelMain.add(qScroller);
@@ -66,7 +61,8 @@ public class SimpleChatClientA {
         panelMain.add(buttonSend);
 
         setUpNetworking();
-        //запускаем отдельный поток для вложенного класса
+
+        // запускаем отдельный поток для вложенного класса
         Thread readerThread = new Thread(new IncomingReader());
         readerThread.start();
 
@@ -79,8 +75,7 @@ public class SimpleChatClientA {
     private void setUpNetworking() {
         try {
             socket = new Socket("194.87.99.197", 5000);
-            InputStreamReader streamReader
-                    = new InputStreamReader(socket.getInputStream());
+            InputStreamReader streamReader = new InputStreamReader(socket.getInputStream());
             reader = new BufferedReader(streamReader);
 
             writer = new PrintWriter(socket.getOutputStream());
@@ -97,9 +92,10 @@ public class SimpleChatClientA {
         public void actionPerformed(ActionEvent ev) {
 
             try {
+                if (outgoing.getText().contains("/clear"))
+                    incoming.setText("");
 
-                writer.println("[" + userName.getText()
-                        + "]" + outgoing.getText());
+                writer.println("[" + userName.getText() + "]" + outgoing.getText());
 
                 writer.flush();
                 System.out.println("WRITE " + outgoing.getText());
@@ -124,7 +120,6 @@ public class SimpleChatClientA {
 
                 while ((message = reader.readLine()) != null) {
                     System.out.println("read " + message);
-                    chatHistory = chatHistory.concat(message + "\n");
                     incoming.append(message + "\n");
                     vertical.setValue(vertical.getMaximum());
                 }
@@ -134,4 +129,3 @@ public class SimpleChatClientA {
         }
     }
 }
-

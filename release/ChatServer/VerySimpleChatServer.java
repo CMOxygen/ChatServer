@@ -3,10 +3,7 @@
  * NOT FOR COMMON USE
  */
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.Serializable;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -22,13 +19,18 @@ public class VerySimpleChatServer {
     Socket socket;
 
     public static void main(String[] args) {
+        System.out.println("Server is running...");
         new VerySimpleChatServer().go();
     }
 
     public void go() {
+        try {
+            chatHistory = getChatHistory();
 
+        } catch (Exception ex) {
+            System.out.println("ERROR OPENING FILE chat_history");
+        }
         clientOutputStream = new ArrayList<User>();
-        chatHistory.concat("test");
 
         try {
             ServerSocket serverSocket = new ServerSocket(5000);
@@ -45,7 +47,7 @@ public class VerySimpleChatServer {
                 isReader = new InputStreamReader(clientSocket.getInputStream());
                 reader = new BufferedReader(isReader);
 
-                newUser.setUserName("USER");
+                newUser.setUserName("defaultUserName");
                 newUser.setUserSocket(clientSocket);
                 newUser.setUserWriter(writer);
                 newUser.setUserInputStreamReader(isReader);
@@ -63,6 +65,37 @@ public class VerySimpleChatServer {
         }
     }
 
+    public void saveChatHistory(String history) {
+        try {
+            FileOutputStream chatFileStream = new FileOutputStream("chat_history.txt");
+            ObjectOutputStream chatObjectStream = new ObjectOutputStream(chatFileStream);
+            chatObjectStream.writeObject(history);
+            chatObjectStream.close();
+
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+    }
+
+    public void clearChatHistory() {
+        try {
+            FileOutputStream chatFileStream = new FileOutputStream("chat_history.txt");
+            ObjectOutputStream chatObjectStream = new ObjectOutputStream(chatFileStream);
+            chatObjectStream.writeObject("");
+            chatObjectStream.close();
+
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+    }
+
+    public String getChatHistory() throws Exception {
+
+        FileInputStream chatFileStream = new FileInputStream("chat_history.txt");
+        ObjectInputStream chatObjectStream = new ObjectInputStream(chatFileStream);
+        return (String) chatObjectStream.readObject();
+    }
+
     public void tellEveryone(String message) {
 
         for (User user : clientOutputStream) {
@@ -78,7 +111,7 @@ public class VerySimpleChatServer {
         }
     }
 
-    class ClientHandler implements Runnable {
+    class ClientHandler implements Runnable, Serializable {
 
         User userToTalk;
 
@@ -105,62 +138,16 @@ public class VerySimpleChatServer {
                     chatHistory = chatHistory.concat(message + "\n");
                     System.out.println("HISTORY:\n" + chatHistory);
 
-                    tellEveryone(message);
+                    if (message.contains("/clear"))
+                        chatHistory = "";
 
-//                    if (message.contains("/requestChatHistory")) {
-//                        userToTalk.getUserWriter().write(chatHistory);
-//                        continue;
-//                    } else {
-//                        tellEveryone(message);
-//                    }
+                    tellEveryone(message);
+                    saveChatHistory(chatHistory);
                 }
+                System.out.println("HISTORY2:\n" + chatHistory);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
-    }
-}
-
-class User implements Serializable {
-    String userName = "NULL";
-    Socket userSocket;
-    PrintWriter userWriter;
-    InputStreamReader userInputStreamReader;
-    BufferedReader userReader;
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public Socket getUserSocket() {
-        return userSocket;
-    }
-
-    public void setUserSocket(Socket userSocket) {
-        this.userSocket = userSocket;
-    }
-
-    public PrintWriter getUserWriter() {
-        return userWriter;
-    }
-
-    public void setUserWriter(PrintWriter userWriter) {
-        this.userWriter = userWriter;
-    }
-
-    public void setUserInputStreamReader(InputStreamReader userInputStreamReader) {
-        this.userInputStreamReader = userInputStreamReader;
-    }
-
-    public BufferedReader getUserReader() {
-        return userReader;
-    }
-
-    public void setUserReader(BufferedReader userReader) {
-        this.userReader = userReader;
     }
 }

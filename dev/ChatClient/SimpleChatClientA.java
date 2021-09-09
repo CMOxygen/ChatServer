@@ -29,6 +29,8 @@ public class SimpleChatClientA {
 
     JScrollPane qScroller;
 
+    JDialog test;
+
     public static void main(String[] args) {
         new SimpleChatClientA().go();
     }
@@ -66,6 +68,7 @@ public class SimpleChatClientA {
         panelMain.add(buttonSend);
 
         setUpNetworking();
+
         //запускаем отдельный поток для вложенного класса
         Thread readerThread = new Thread(new IncomingReader());
         readerThread.start();
@@ -97,6 +100,8 @@ public class SimpleChatClientA {
         public void actionPerformed(ActionEvent ev) {
 
             try {
+                if(outgoing.getText().contains("/clear"))
+                    incoming.setText("");
 
                 writer.println("[" + userName.getText()
                         + "]" + outgoing.getText());
@@ -124,7 +129,6 @@ public class SimpleChatClientA {
 
                 while ((message = reader.readLine()) != null) {
                     System.out.println("read " + message);
-                    chatHistory = chatHistory.concat(message + "\n");
                     incoming.append(message + "\n");
                     vertical.setValue(vertical.getMaximum());
                 }
